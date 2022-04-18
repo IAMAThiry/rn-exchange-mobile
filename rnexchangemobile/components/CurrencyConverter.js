@@ -106,8 +106,8 @@ export default class CurrencyConverter extends Component {
             temp_wallet.push([this.state.requested_code,amt])
         }
         if(funds_available) {
-            this.saveTransaction(transaction);
             this.setState({wallet:temp_wallet});
+            this.saveTransaction(transaction,temp_wallet);
         } else {
             this.throwError("You tried to convert more funds than you have available.");
         }
@@ -115,14 +115,15 @@ export default class CurrencyConverter extends Component {
         this.forceUpdate();
     }
 
-    async saveTransaction(transaction) {
+    async saveTransaction(transaction,wallet) {
         let value = await AsyncStorage.getItem('@HISTORY');
+        let newHistory = JSON.parse(value);
+        let d = new Date().toLocaleString();
         if (value !== null) {
-            let newHistory = JSON.parse(value);
-            newHistory.push(transaction+" @"+new Date().toLocaleString());
+            newHistory.push({transaction,d,wallet});
             await AsyncStorage.setItem('@HISTORY', JSON.stringify(newHistory));
         } else {
-            await AsyncStorage.setItem('@HISTORY', JSON.stringify([transaction+" @"+new Date().toLocaleString()]))
+            await AsyncStorage.setItem('@HISTORY', JSON.stringify([{transaction,d,wallet}]))
         }
     }
 
@@ -132,7 +133,6 @@ export default class CurrencyConverter extends Component {
             this.setState({historyVisible:true,history:JSON.parse(value)});
         } else {
             this.setState({historyVisible:true,history:[]});
-            //TODO: alertt they dont have history
         }
     }
 
@@ -151,24 +151,36 @@ export default class CurrencyConverter extends Component {
                     visible={this.state.historyVisible}
                     onRequestClose={() => {
                         this.setState({historyVisible:false});
-                    }}
-                    >
+                    }}>
                     <SafeAreaView style={{backgroundColor:"#FFFFFF", width:"100%", height:"100%", marginTop:10}}>
-                        <ScrollView style={{backgroundColor:"#FFFFFF", width:"100%", height:"100%"}}>
+                        <ScrollView style={{backgroundColor:"#FFFFFF", width:"100%", height:"100%", margin:10}}>
                             <Text style={styles.txtTitle}>History:</Text>
                             <TouchableOpacity style={styles.historyLogo} onPress={()=>this.hideHistory()}>
                                 <Image
                                     style={styles.cancelLogo}
                                     source={require('../icons/cancel.png')}/>
                             </TouchableOpacity>
-                            {this.state.history.map(name=>{
+                            {this.state.history.map((obj)=>{
+                                console.log(obj);
                                 return (
-                                    <Text style={styles.historyTxt}>{name}</Text>
+                                    <View style={{marginTop:10}}>
+                                        <Text style={styles.historyTxt}>{obj.transaction}</Text>
+                                        <Text style={styles.historyTxt}>{obj.d}</Text>
+
+                                            <View style={{flexDirection:'column', marginLeft:10}}>
+                                                {obj.wallet.map((currency)=>{
+                                                    console.log(currency);
+                                                    return (
+                                                        <Text style={styles.walletHistory}>{currency[0]} {currency[1].toFixed(2)}</Text>
+                                                    );
+                                                })}
+                                            </View>
+                                    </View>
                                 );
                             })}
                         </ScrollView>               
                     </SafeAreaView>
-                    </Modal>
+                </Modal>
 
                 <Text style={styles.txtTitle}>Balance(s)</Text>
                 <TouchableOpacity style={styles.historyLogo} onPress={()=>this.showHistory()}>
@@ -320,7 +332,6 @@ const styles = StyleSheet.create({
         height:30
     },
     historyTxt:{
-        margin:5,
         marginLeft:10
     },
     button: {
@@ -349,5 +360,8 @@ const styles = StyleSheet.create({
         fontWeight:"bold",
         backgroundColor:"lightblue",
         color:'teal'
+    },
+    walletHistory:{
+        margin:5,
     }
 });
