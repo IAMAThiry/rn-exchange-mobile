@@ -11,8 +11,6 @@ import {
     Pressable,
     ScrollView
 } from "react-native";
-import FIXER_API_KEY from '../utils/const';
-import CurrencyPickerComponent from "./CurrencyPicker";
 import axios from 'axios';
 import CurrencyPicker from "react-native-currency-picker";
 import NumericInput from "@wwdrew/react-native-numeric-textinput";
@@ -48,18 +46,9 @@ export default class CurrencyConverter extends Component {
                 this.setState({current_rate:value,requested_code:data.code});
             }
           }).catch(async (error) => {
-            this.throwFunnyError("Eric did something wrong, or the api key is now invalid.  Call me.");
+            this.throwError("Eric did something wrong, or the api key is now invalid.");
           });
-
-        // var fakeresponsedata = {
-        //     "success": true,
-        //     "timestamp": 1649957824,
-        //     "base": "EUR",
-        //     "date": "2022-04-14",
-        //     "rates": {
-        //         "USD": 1.082403
-        //     }
-        // }
+          
         this.forceUpdate();
     }
 
@@ -88,12 +77,12 @@ export default class CurrencyConverter extends Component {
         );
     }
 
-    throwFunnyError(message){
+    throwError(message){
         Alert.alert(
             "SOMETHING WENT WRONG",
             message,
             [
-              { text: "I'LL CONFIRM BECAUSE IT'S THE ONLY OPTION", onPress: () => console.log("got em") }
+              { text: "OK", onPress: () => console.log("Error Confirmed") }
             ]
         );
     }
@@ -120,11 +109,9 @@ export default class CurrencyConverter extends Component {
             this.saveTransaction(transaction);
             this.setState({wallet:temp_wallet});
         } else {
-            this.throwFunnyError("You tried to convert more funds than you have available.");
+            this.throwError("You tried to convert more funds than you have available.");
         }
-        // console.log("converted");
-        // console.log(this.state.base_currency);
-        // console.log(this.state.requested_code);
+        
         this.forceUpdate();
     }
 
@@ -140,11 +127,8 @@ export default class CurrencyConverter extends Component {
     }
 
     async showHistory() {
-        console.log("h");
         let value = await AsyncStorage.getItem('@HISTORY');
         if (value !== null) {
-            console.log("HISTORY");
-            console.log(value);
             this.setState({historyVisible:true,history:JSON.parse(value)});
         } else {
             this.setState({historyVisible:true,history:[]});
