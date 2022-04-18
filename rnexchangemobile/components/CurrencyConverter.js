@@ -30,17 +30,18 @@ export default class CurrencyConverter extends Component {
     componentDidMount() {
         currencyPickerRef.open();
         // currencyPickerRefBase.open();
-        // this.resetDB();
-        this.getConversionRate({"code":"EUR"});
+        this.resetDB();
+        this.getConversionRate(this.state.base_currency, {"code":"EUR"});
     }
 
-    getConversionRate(data) {
-        let url = 'http://data.fixer.io/api/latest?access_key=23f5a530ee162ae53b99166196ab932e&base=' + this.state.base_currency + '&symbols=' + data.code;
+    getConversionRate(base_currency, data) {
+        let url = 'http://data.fixer.io/api/latest?access_key=23f5a530ee162ae53b99166196ab932e&base=' + base_currency + '&symbols=' + data.code;
 
         axios({
             method:'GET',
             url: url,
           }).then(async (response) => {
+              console.log(response);
             for (let key in response.data.rates) {
                 let value = response.data.rates[key];
                 this.setState({current_rate:value,requested_code:data.code});
@@ -59,6 +60,7 @@ export default class CurrencyConverter extends Component {
 
     setBaseCurrency(value) {
         this.setState({base_currency:value.code});
+        this.getConversionRate(value.code,{'code':this.state.requested_code});
     }
 
     confirmConvert() {
@@ -152,24 +154,21 @@ export default class CurrencyConverter extends Component {
                     onRequestClose={() => {
                         this.setState({historyVisible:false});
                     }}>
-                    <SafeAreaView style={{backgroundColor:"#FFFFFF", width:"100%", height:"100%", marginTop:10}}>
-                        <ScrollView style={{backgroundColor:"#FFFFFF", width:"100%", height:"100%", margin:10}}>
+                    <SafeAreaView style={{backgroundColor:"#c9ffd8", width:"100%", height:"100%", marginTop:10}}>
+                        <ScrollView style={{backgroundColor:"#c9ffd8", width:"100%", height:"100%", margin:10}}>
                             <Text style={styles.txtTitle}>History:</Text>
                             <TouchableOpacity style={styles.historyLogo} onPress={()=>this.hideHistory()}>
                                 <Image
                                     style={styles.cancelLogo}
-                                    source={require('../icons/cancel.png')}/>
+                                    source={require('../icons/history-logo.png')}/>
                             </TouchableOpacity>
                             {this.state.history.map((obj)=>{
-                                console.log(obj);
                                 return (
                                     <View style={{marginTop:10}}>
                                         <Text style={styles.historyTxt}>{obj.transaction}</Text>
                                         <Text style={styles.historyTxt}>{obj.d}</Text>
-
                                             <View style={{flexDirection:'column', marginLeft:10}}>
                                                 {obj.wallet.map((currency)=>{
-                                                    console.log(currency);
                                                     return (
                                                         <Text style={styles.walletHistory}>{currency[0]} {currency[1].toFixed(2)}</Text>
                                                     );
@@ -182,11 +181,11 @@ export default class CurrencyConverter extends Component {
                     </SafeAreaView>
                 </Modal>
 
-                <Text style={styles.txtTitle}>Balance(s)</Text>
+                <Text style={styles.txtTitle}>Wallet</Text>
                 <TouchableOpacity style={styles.historyLogo} onPress={()=>this.showHistory()}>
                     <Image
                         style={styles.historyLogo}
-                        source={require('../icons/history-icon.png')}/>
+                        source={require('../icons/history-logo.png')}/>
                 </TouchableOpacity>
                 {this.state.wallet.map((prop, key) => {
                     return (
@@ -197,7 +196,7 @@ export default class CurrencyConverter extends Component {
                     );
                 })}
                 <Text style={styles.txt}>Convert from:</Text>
-                <View style={{flexDirection:"row", margin:10}}>
+                <View style={styles.rowCtnr}>
                     <CurrencyPicker
                         currencyPickerRefBase={(ref2) => {currencyPickerRefBase = ref2}}
                         enable={true} darkMode={true}
@@ -226,7 +225,7 @@ export default class CurrencyConverter extends Component {
                         enable={true} darkMode={true}
                         currencyCode={this.state.requested_code}
                         showFlag={true} showCurrencyName={true} showCurrencyCode={true}
-                        onSelectCurrency={(data) => this.getConversionRate(data)}
+                        onSelectCurrency={(data) => this.getConversionRate(this.state.base_currency, data)}
                         onOpen={() => {console.log("Open")}}
                         onClose={() => {console.log("Close")}}
                         showNativeSymbol={true} showSymbol={false}
@@ -277,7 +276,7 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         flex:1,
         margin:10,
-        height:"100%"
+        height:"100%",
     },
     txtCountryName: {
         marginLeft: 10
@@ -292,7 +291,8 @@ const styles = StyleSheet.create({
     },
     rowCtnr: {
         flexDirection:"row",
-        margin:10
+        margin:10,
+        flex:1
     },
     txtBalanceCode:{
         margin:15,
@@ -319,8 +319,8 @@ const styles = StyleSheet.create({
     },
     cancelLogo:{
         position:'absolute',
-        top:15,
-        right:15,
+        top:5,
+        right:35,
         width:30,
         height:30
     },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
         top:5,
         right:15,
         width:30,
-        height:30
+        height:30,
     },
     historyTxt:{
         marginLeft:10
@@ -362,6 +362,6 @@ const styles = StyleSheet.create({
         color:'teal'
     },
     walletHistory:{
-        margin:5,
+        margin:2.5,
     }
 });
